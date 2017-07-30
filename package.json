@@ -1,0 +1,35 @@
+{
+  "name": "regexp-module-loader",
+  "version": "1.0.0",
+  "description": "Load node modules using regular expressions",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "standard && nyc mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kryptogeist/regexp-module-loader.git"
+  },
+  "author": "Pablo Oliveira <kryptogeist@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kryptogeist/regexp-module-loader/issues"
+  },
+  "standard": {
+  "ignore": [
+      "/test/"
+    ]
+  },
+  "homepage": "https://github.com/kryptogeist/regexp-module-loader#readme",
+  "devDependencies": {
+    "chai": "^4.1.0",
+    "mocha": "^3.4.2",
+    "mock-require": "^2.0.2",
+    "nyc": "^11.1.0",
+    "sinon": "^2.4.1",
+    "standard": "^10.0.2"
+  }
+}
