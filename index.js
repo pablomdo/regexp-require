@@ -3,7 +3,7 @@
 const path = require('path')
 
 const DEFAULT_OPTIONS = {
-  ignoreDev: false
+  ignoreDev: true
 }
 
 function assignOptions (options, defaultOptions) {
