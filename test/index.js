@@ -48,7 +48,7 @@ describe('regexp-module-loader', () => {
     const pkgJson = generatePackageJson(dependencies, devDependencies)
     mockModules(pkgJson.dependencies, pkgJson.devDependencies)
 
-    const actual = rml(regexps, pkgJson)
+    const actual = rml(regexps, pkgJson, { ignoreDev: false })
     const expected = dependencies.concat(devDependencies)
 
     expected.forEach((moduleName) => {
@@ -136,5 +136,23 @@ describe('regexp-module-loader', () => {
     const actual = rml(regexps, pkgJson)
 
     expect(Object.keys(actual)).to.be.empty
+  })
+
+  it('should support regular expressions', () => {
+    const regexps = [/mock-test-[1-3]/, /test-dev-[1-2]/]
+
+    const dependencies = ['mock-test-1', 'mock-test-2', 'mock-test-3', 'mock-test-4']
+    const devDependencies = ['mock-test-dev-1', 'mock-test-dev-2', 'mock-test-dev-3']
+    const pkgJson = generatePackageJson(dependencies, devDependencies)
+    mockModules(pkgJson.dependencies, pkgJson.devDependencies)
+
+    const actual = rml(regexps, pkgJson, { ignoreDev: false })
+    const expected = ['mock-test-1', 'mock-test-2', 'mock-test-3', 'mock-test-dev-1', 'mock-test-dev-2']
+
+    expect(Object.keys(actual).length).to.equal(5)
+
+    expected.forEach((moduleName) => {
+      expect(actual).to.have.property(moduleName)
+    })
   })
 })
