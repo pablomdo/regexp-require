@@ -1,80 +1,37 @@
-# regexp-module-loader [![Build Status](https://travis-ci.org/kryptogeist/regexp-module-loader.svg?branch=develop)](https://travis-ci.org/kryptogeist/regexp-module-loader)
+# regexp-require
 
-Load multiple node modules at once using regular expressions
+Load NPM modules by using Regular Expressions.
 
-## Install
-`$ npm install regexp-module-loader`
+This module is useful if you need to load multiple NPM modules that follow a name pattern at once .
 
-## Usage
-```
-regexp - string, RegExp, Array(string|RegExp)
-packageJson - object, string
-options - See options below
-```
+## install
 
-`rml(regexp, packageJson, [options])`
+`$ npm install --save regexp-require`
 
-`regexp-module-loader` will load modules that macth the provied regexp and are defined in your `package.json` file as a dependency.
+## example
 
-```javascript
-const rml = require('regexp-module-loader')
-```
+Given that you have the following Grunt plugins installed and want to load all of them at once:
+
+* `grunt-contrib-clean`
+* `grunt-contrib-htmlmin`
+* `grunt-contrib-imagemin`
+
+You can use the following code snippet to load them:
 
 ```javascript
-const pkg = require('./package.json')
-const modules = rml('some-module-', pkg)
+const rrequire = require('regexp-require')
+const gruntPlugins = rrequire(/^grunt-contrib-/)
 ```
-
-Or you can specify the path to your `package.json`, like this:
+The modules will be loaded into the `gruntPlugins` object. Each module can accessed by its name, as it will be just a key in the object.
 
 ```javascript
-const modules = rml('some-module-', './path/to/package.json')
+gruntPlugins['grunt-contrib-clean']
+gruntPlugins['grunt-contrib-htmlmin']
+gruntPlugins['grunt-contrib-imagemin']
 ```
 
+In this example, the pattern `^grunt-contrib-` will match all modules installed that the name starts with "grunt-contrib-".
 
-## Options
-### ignoreDev (default=false)
-
-Ignore devDependencies modules.
-
-```javascript
-const rml = require('regexp-module-loader')
-
-const pkg = require('./package.json')
-const modules = rml('some-module-', pkg, { ignoreDev: true })
-```
-
-## Example
-
-Given the following `package.json` as an example:
-
-```json
-{
-  "name": "my-module",
-  "dependencies": {
-    "some-module-to-write": "1.0.0",
-    "some-module-to-read": "1.0.0",
-    "other-module-to-do-stuff": "1.0.0",
-  }
-}
-```
-
-Let's load all modules that matches "some-module-":
-
-```javascript
-const rml = require('regexp-module-loader')
-
-const pkg = require('./package.json')
-const modules = rml('some-module-', pkg)
-
-modules['some-module-to-write']()
-modules['some-module-to-read']()
-typeof modules['other-module-to-do-stuff'] // 'undefined'
-```
-
-`modules` will be an object where its properties are the module name and its values the module itself.
-
-In this example, the modules `some-module-to-write` and `some-module-to-read` will be loaded into `modules`. The other module `other-module-to-do-stuff` will not be loaded since it did not match the provided regexp.
 
 ## License
 MIT
