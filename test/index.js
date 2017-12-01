@@ -1,140 +1,112 @@
 'use strict'
 
+const proxy = require('proxyquire')
 const mock = require('mock-require')
 const expect = require('chai').expect
-const sinon = require('sinon')
-const rml = require('../index.js')
 
-function generatePackageJson(dependencies, devDependencies) {
-  let pkgJson = {
-    dependencies: {},
-    devDependencies: {}
+const mocks = {
+  npm: {
+    load: (options, callback) => {
+      this.options = options
+      callback()
+    },
+    commands: {
+      ls: (some, stuff, callback) => {
+        let data
+
+        if (this.options.global) {
+          data = {
+            dependencies: {
+              'grunt': {},
+              'gulp': {},
+              'nodemon': {},
+              'npm': {}
+            }
+          }
+        } else {
+          data = {
+            dependencies: {
+              'express': {},
+              'express-session': {},
+              'mongoose': {},
+              'npm': {}
+            },
+            devDependencies: {
+              'gulp': {},
+              'gulp-mocha': {},
+              'mocha': {}
+            }
+          }
+        }
+
+        callback(undefined, data)
+      }
+    }
+  },
+  requireg: () => {
+    return {}
   }
-
-  const deps = Array.isArray(dependencies) ? dependencies : []
-  const devDeps = Array.isArray(devDependencies) ? devDependencies : []
-
-  deps.forEach((dependency) => {
-    pkgJson.dependencies[dependency] = sinon.spy()
-  })
-
-  devDeps.forEach((devDependency) => {
-    pkgJson.devDependencies[devDependency] = sinon.spy()
-  })
-
-  return pkgJson
 }
 
-function mockModules() {
-  const dependencies = Array.from(arguments)
+const rrequire = proxy('../index.js', mocks)
 
-  dependencies.forEach((dependency) => {
-    for (let key in dependency) {
-      mock(key, dependency[key])
-    }
+function mockModules(modules) {
+  modules.forEach((module) => {
+    mock(module, {})
   })
 }
 
 describe('regexp-module-loader', () => {
-  afterEach(() => {
-    mock.stopAll()
-  })
-
-  it('should load all matches', () => {
-    const regexps = 'mock-test-'
-
-    const dependencies = ['mock-test-1', 'mock-test-2']
-    const devDependencies = ['mock-test-dev-1', 'mock-test-dev-2']
-    const pkgJson = generatePackageJson(dependencies, devDependencies)
-    mockModules(pkgJson.dependencies, pkgJson.devDependencies)
-
-    const actual = rml(regexps, pkgJson)
-    const expected = dependencies.concat(devDependencies)
+  it('should load global modules by default', () => {
+    const expected = ['grunt', 'gulp']
+    const actual = rrequire(/^g/)
 
     expected.forEach((moduleName) => {
       expect(actual).to.have.property(moduleName)
     })
   })
 
-  it('should not load modules that did not have any matches', () => {
-    const regexps = 'mock-test-'
+  it('should load local modules', () => {
+    const expected = ['express', 'express-session']
+    mockModules(expected)
+    const actual = rrequire(/^express/)
 
-    const dependencies = ['mock-test-1', 'mock-test-2', 'do-not-load-this']
-    const devDependencies = ['mock-test-dev-1', 'mock-test-dev-2', 'do-not-load-this-dev']
-    const pkgJson = generatePackageJson(dependencies, devDependencies)
-    mockModules(pkgJson.dependencies, pkgJson.devDependencies)
-
-    const expected = [
-      'do-not-load-this',
-      'do-not-load-this-dev'
-    ]
-
-    const actual = rml(regexps, pkgJson)
-
-    expected.forEach((moduleName) => {
-      expect(actual).to.not.have.property(moduleName)
+    expected.forEach((module) => {
+      expect(actual).to.have.property(module)
     })
   })
 
-  it('should not load devDependencies if ignoreTrue = true', () => {
-    const regexps = 'mock-test-'
-    const dependencies = ['mock-test-1', 'mock-test-2']
-    const devDependencies = ['mock-test-dev-1', 'mock-test-dev-2']
-    const pkgJson = generatePackageJson(dependencies, devDependencies)
-    mockModules(pkgJson.dependencies, pkgJson.devDependencies)
+  it('should load local devDependencies', () => {
+    const expected = ['mocha', 'gulp-mocha']
+    mockModules(expected)
+    const options = {
+      ignoreDev: false
+    }
 
-    const actual = rml(regexps, pkgJson, { ignoreDev: true })
-
-    devDependencies.forEach((moduleName) => {
-      expect(actual).to.not.have.property(moduleName)
+    const actual = rrequire(/mocha/, options)
+    expected.forEach((module) => {
+      expect(actual).to.have.property(module)
     })
   })
 
-  it('should accept a path to package.json', () => {
-    const regexps = 'mock-test-'
-    const dependencies = ['mock-test-1', 'mock-test-2']
-    const pkgJson = generatePackageJson(dependencies)
-    const pathToPackageJson = '/path/to/package.json'
-    mock(pathToPackageJson, pkgJson)
-    mockModules(pkgJson.dependencies, pkgJson.devDependencies)
+  it('should return a promise when isAsync=true', (done) => {
+    const expected = ['grunt', 'gulp']
+    const options = {
+      isAsync: true
+    }
 
-    const actual = rml(regexps, pathToPackageJson)
+    rrequire(/^g/, options)
+      .then((actual) => {
+        expected.forEach((module) => {
+          expect(actual).to.have.property(module)
+        })
 
-    dependencies.forEach((moduleName) => {
-      expect(actual).to.have.property(moduleName)
-    })
+        done()
+      })
   })
 
-  it('should throw an error if package.json is neither a string or an object', () => {
-    const regexps = ['mock-test-']
-
-    expect(() => { rml(regexps, 420) }).to.throw('Invalid package.json format.')
-  })
-
-  it('should accept multiple regular expressions', () => {
-    const regexps = ['mock-a-', 'mock-b-']
-    const dependencies = ['mock-a-1', 'mock-a-2', 'mock-b-1', 'mock-c-1']
-    const pkgJson = generatePackageJson(dependencies)
-    mockModules(pkgJson.dependencies)
-
-    const actual = rml(regexps, pkgJson)
-    const expected = ['mock-a-1', 'mock-a-2', 'mock-b-1']
-
-    expected.forEach((moduleName) => {
-      expect(actual).to.have.property(moduleName)
-    })
-
-    expect(actual).to.not.have.property('mock-c-1')
-  })
-
-  it('should return an empty object if no matches were found', () => {
-    const regexps = 'mock-c-'
-    const dependencies = ['mock-a-1', 'mock-a-2', 'mock-b-1']
-    const pkgJson = generatePackageJson(dependencies)
-    mockModules(pkgJson.dependencies)
-
-    const actual = rml(regexps, pkgJson)
-
-    expect(Object.keys(actual)).to.be.empty
+  it('should return an empty array if no matches were found', () => {
+    const actual = rrequire(/^hapi/)
+    expect(actual).to.be.empty
   })
 })

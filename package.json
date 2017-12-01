@@ -1,7 +1,7 @@
 {
-  "name": "regexp-module-loader",
+  "name": "regexp-require",
   "version": "1.0.0",
-  "description": "Load node modules using regular expressions",
+  "description": "Load NPM modules using regular expressions",
   "main": "index.js",
   "directories": {
     "test": "test"
@@ -11,25 +11,34 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kryptogeist/regexp-module-loader.git"
+    "url": "git+https://github.com/kryptogeist/regexp-require.git"
+  },
+  "engines" : {
+    "node" : ">=4"
   },
   "author": "Pablo Oliveira <kryptogeist@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kryptogeist/regexp-module-loader/issues"
+    "url": "https://github.com/kryptogeist/regexp-require/issues"
   },
   "standard": {
-  "ignore": [
+    "ignore": [
       "/test/"
     ]
   },
-  "homepage": "https://github.com/kryptogeist/regexp-module-loader#readme",
+  "homepage": "https://github.com/kryptogeist/regexp-require#readme",
   "devDependencies": {
     "chai": "^4.1.0",
     "mocha": "^3.4.2",
     "mock-require": "^2.0.2",
     "nyc": "^11.1.0",
-    "sinon": "^2.4.1",
+    "proxyquire": "^1.8.0",
     "standard": "^10.0.2"
+  },
+  "dependencies": {
+    "deasync-promise": "^1.0.1",
+    "npm": "^5.4.2",
+    "q": "^1.5.0",
+    "requireg": "^0.1.7"
   }
 }
